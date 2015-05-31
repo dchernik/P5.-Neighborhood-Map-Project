@@ -1,0 +1,304 @@
+<!doctype html>
+<html class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <title>P5  Neighborhood Map Project</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="Awesome description could've been here.">
+    <meta name="author" content="Denis Chernik">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(.) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="bower_components/awesomplete/awesomplete.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+  </head>
+  <body data-bind="css: { showmenu: placesListVisible, 'looking-for-location': animateGps }">
+    <!--[if lt IE 10]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+    <!-- application's navbar/heade - contains places filter input, weather and tools to control places' view -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="row hidden-xs">
+          <div class="col-sm-6" data-bind="foreach: { data: placesByType, as: 'category' }">
+            <button type="submit" class="category-btn active" data-bind="click: $root.toggleCategory, attr: { 'aria-label': category.name }, css: { active: $root.btnState($data.name) }">
+              <span class="glyphicon" aria-hidden="true" data-bind="css: $root.getGlyth($data.name)"></span><span data-bind="text: $data.name"></span>
+            </button>
+          </div>
+          <div class="col-sm-6">
+            <div class="weather pull-right text-center navbar-text" title="Current weather conditions." data-bind="click: toggleForecast">
+              <p>
+                <span class="hidden-xs" data-bind="text: weatherCondition"></span>
+                <i data-bind="css: weatherIcon"></i>
+                <span data-bind="text: temperature"></span>
+              </p>
+              <div class="wind" >
+                <span data-bind="text: wind"></span>
+                <span class="speed-units" data-bind="text: windSpeed"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <hr class="divider hidden-xs">
+        <div class="row">
+          <div class="col-xs-9">
+            <div class="input-group search-places-group">
+              <input  id="awesominput" type="text" class="form-control" placeholder="Filter places..." data-bind="observeInputValue: inputValue, event: { 'value-updated': updatePlaces }, enable: droppedMarkers().length === 22">
+              <span class="input-group-btn">
+                <button class="btn btn-default clear-btn" type="button" title="Clear input" aria-label="Clear input" data-bind="click: clearInput, enable: inputValue">
+                  <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                </button>
+              </span>
+            </div>
+          </div>
+          <div class="col-xs-3 text-right">
+            <button type="button" class="btn list-btn navbar-btn" data-bind="click: togglePlacesList" aria-label="Menu button" title="Toggle places list">
+              <span class="glyphicon glyphicon-menu-hamburger" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <hr class="divider visible-xs">
+        <div class="row visible-xs">
+          <div class="col-xs-4">
+            <div class="dropdown">
+              <button id="dropdown-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default navbar-btn">
+                Categories
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" role="menu" aria-labelledby="dropdown-btn">
+                <li>
+                  <ul class="categories-dropdown" data-bind="foreach: { data: placesByType, as: 'category' }">
+                    <li role="presentation"  data-bind="click: $root.toggleCategory, css: { active: $root.btnState(category.name) }">
+                      <a role="menuitem" tabindex="-1" href="#">
+                        <span class="glyphicon" aria-hidden="true" data-bind="css: $root.getGlyth($data.name)"></span>
+                        <span data-bind="text: category.name"></span>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+                <li role="presentation" class="divider"></li>
+                <li role="presentation" data-bind="click: $root.showAll">
+                  <a role="menuitem" tabindex="-1" href="#">
+                    <span class="glyphicon glyphicon-check" aria-hidden="true"></span>
+                    All
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-xs-8">
+            <div class="weather pull-right text-center navbar-text" title="Current weather conditions." data-bind="click: toggleForecast">
+              <p>
+                <i data-bind="css: weatherIcon"></i>
+                <span data-bind="text: temperature"></span>
+              </p>
+              <div class="wind" >
+                <span data-bind="text: wind"></span>
+                <span class="speed-units" data-bind="text: windSpeed"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Google map -->
+    <div id="map-canvas"></div>
+
+    <!-- Enter locations to search Google db for -->
+    <input id="pac-input" class="controls" type="text" placeholder="Enter a location">
+
+    <!-- sliding list of places -->
+    <div class="places">
+      <div class="places-list" data-bind="foreach: { data: placesByType, as: 'category' }">
+        <button type="submit" class="category-btn active" data-bind="click: $root.toggleCategory, attr: { 'aria-label': category.name }, css: { active: $root.btnState($data.name) }">
+          <span class="glyphicon" aria-hidden="true" data-bind="css: $root.getGlyth($data.name)"></span><span data-bind="text: $data.name"></span>
+        </button>
+        <ul class="places-sublist text-center" data-bind="fadeVisible: $root.showCategory($data), foreach: { data: items, as: 'item' }">
+          <li class="bg-info places-list-item" data-bind="text: item, click: $root.selectPlace, css: { 'place-selected': item == $root.selectedPlace.name() }, fadeVisible: $root.droppedMarkers.indexOf($data) > -1">
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- hidden by default, shows carousel with place's gallery -->
+    <div class="modal fade" id="bsModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="modal-title text-center">
+              <button class="btn btn-success slideshow-btn">Start slideshow</button>
+            </div>
+          </div>
+          <div class="modal-body">
+            <div id="carousel" class="carousel lazypreload slide no-src lazyload" data-ride="carousel">
+              <div class="carousel-inner" role="listbox" data-bind="showHelper: galleryHelperVisible()">
+                <div class="item active carousel-helper text-center">
+                  <p>The following images are taken in the vicinity of <strong data-bind="text: selectedPlace.name"></strong>.</p>
+                  <p>To scroll - click/tap sides of the view, or use arrow keys on your keyboard. Slideshow mode is not recommended on slow Internet connection. If you enable it, placing mouse over image will pause it.</p>
+                </div>
+                <!-- ko foreach: { data: placeGallery, as: 'image' } -->
+                  <div class="item">
+                    <img class="carousel-img no-src lazyload" data-bind="attr: { 'data-src': image.src, alt: image.title }, imgEvents: true">
+                    <div class="img-meta hidden">
+                      <h3 data-bind="text: image.title, attr: { title: image.title }"></h3>
+                      <a data-bind="attr: { href: image.author, target: 'author' }">Author's profile on <span data-bind="text: image.hosting"></span></a>
+                    </div>
+                  </div>
+                <!-- /ko -->
+              </div>
+              <a class="left carousel-control" href="#carousel" role="button" data-slide="prev">
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                <span class="sr-only">Previous</span>
+              </a>
+              <a class="right carousel-control" href="#carousel" role="button" data-slide="next">
+                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                <span class="sr-only">Next</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- hidden by default, used to construct place's main info-window to show on map -->
+    <div class="info-window hidden">
+      <div class="container-fluid infowindow-container" data-bind="css: { 'loading-gallery': loadingGallery }">
+        <div class="row">
+          <div class="col-xs-12">
+            <strong class="place-name" data-bind="text: selectedPlace.name"></strong>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <p class="place-address" data-bind="text: selectedPlace.address"></p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-6">
+            <a class="place-website" data-bind="visible: selectedPlace.website(), attr: { href: selectedPlace.website, target: 'place_website' }">website</a><br>
+            <a data-bind="attr: { href: selectedPlace.phoneHref }, text: selectedPlace.phone"></a>
+          </div>
+          <div class="col-xs-6 text-right">
+            <button class="btn btn-default gallery-btn" data-bind="click: requestPlaceGallery, attr: { disabled: disableOrNot }"><span class="glyphicon glyphicon-picture" aria-hidden="true"></span> Gallery</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12 street-view" data-bind="css: { 'loading-streetview': streetViewLoading }">
+            <button class="btn" data-bind="click: requestStreetView, attr: { disabled: disableOrNot }">
+              <img class="img-responsive streetview-img" data-bind="attr: { src: selectedPlace.photo, alt: selectedPlace.name }">
+              <p class="text-center">Street view</p>
+              <img class="loading-ball" src="images/spinning-drops.gif" alt="picture of spinning balls">
+            </button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <a class="google-plus" data-bind="attr: { href: selectedPlace.gplus, target: 'place_google_plus' }, html: selectedPlace.rating"></a>
+          </div>
+        </div>
+      </div>
+      <img src="images/spinning-drops.gif" alt="Image animates wait for gallery" class="spinner">
+    </div>
+
+    <!-- hidden by default, used to show info-window with basic place data while AJAX requests are sent for details -->
+    <div class="iw-part hidden">
+      <div class="container-fluid infowindow-container">
+        <div class="row">
+          <div class="col-xs-12 text-center">
+            <span>Please wait while we are working on retrieving the information for </span>
+            <strong class="place-name" data-bind="text: selectedPlace.name"></strong>
+            <hr class="iw-divider">
+          </div>
+        </div>
+        <div class="col-xs-12 text-center">
+          <span>Try again if it takes too long.</span>
+          <hr class="iw-divider">
+        </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <img src="images/loading_triple.gif" alt="Animation of image loading process" class="loading-triple img-responsive">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- hidden by default, used to build and show messages to user -->
+    <div class="err-msg container text-center" data-bind="fadeVisible: displayErrMsg()">
+      <div class="row">
+        <div class="col-xs-12" data-bind="with: errMsg">
+          <span class="glyphicon glyphicon-remove" title="Close error message" aria-hidden="true" data-bind="click: $root.closeErrMsg"></span>
+          <h3 data-bind="text: header"></h3>
+          <!-- ko foreach: { data: paragraphs, as: 'paragraph' } -->
+            <p data-bind="html: paragraph"></p>
+          <!-- /ko -->
+        </div>
+      </div>
+    </div>
+
+    <!-- shows weather forecast when user clicks on current weather conditions in the view -->
+    <div class="forecast" data-bind="fadeVisible: forecastVisible()">
+      <table class="table">
+        <caption>
+          <h5 data-bind="text: weatherLoc"></h5>
+        </caption>
+        <tbody data-bind="foreach: { data: forecast, as: 'day' }">
+          <tr>
+            <th scope="row" data-bind="text: day"></th>
+            <td><i data-bind="css: conditionCode, attr: { title: condition }"></i></td>
+            <td data-bind="text: high"></td>
+            <td data-bind="text: low"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- user-friendly custom button to close street view panorama because default Google's one is a little 'x' -->
+    <button class="btn btn-default close-street-view hidden" data-bind="click: closeStreetView, css: { hidden: !streetViewVisible() }">Close</button>
+
+    <!-- Google maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=places"></script>
+
+    <!-- build:js(.) scripts/vendor.js -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/knockout/dist/knockout.js"></script>
+    <script src="bower_components/simpleWeather/jquery.simpleWeather.js"></script>
+    <script src="bower_components/offline/offline.min.js"></script>
+    <script src="bower_components/awesomplete/awesomplete.js"></script>
+    <script src="bower_components/lazysizes/lazysizes.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+
+    <!-- build:js(.) scripts/plugins.js -->
+    <script src="bower_components/lazysizes/plugins/unveilhooks/ls.unveilhooks.js"></script>
+    <script src="bower_components/bootstrap/js/affix.js"></script>
+    <script src="bower_components/bootstrap/js/alert.js"></script>
+    <script src="bower_components/bootstrap/js/dropdown.js"></script>
+    <script src="bower_components/bootstrap/js/tooltip.js"></script>
+    <script src="bower_components/bootstrap/js/modal.js"></script>
+    <script src="bower_components/bootstrap/js/transition.js"></script>
+    <script src="bower_components/bootstrap/js/button.js"></script>
+    <script src="bower_components/bootstrap/js/popover.js"></script>
+    <script src="bower_components/bootstrap/js/carousel.js"></script>
+    <script src="bower_components/bootstrap/js/scrollspy.js"></script>
+    <script src="bower_components/bootstrap/js/collapse.js"></script>
+    <script src="bower_components/bootstrap/js/tab.js"></script>
+    <!-- endbuild -->
+
+    <!-- build:js({app,.tmp}) scripts/main.js -->
+    <script src="scripts/main.js"></script>
+    <!-- endbuild -->
+
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "p5-neighborhood-map-project",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "~3.3.2",
+    "knockout": "~3.3.0",
+    "simpleWeather": "~3.0.2",
+    "offline": "~0.7.11",
+    "awesomplete": "https://github.com/LeaVerou/awesomplete.git#gh-pages",
+    "lazysizes": "~1.1.2"
+  }
+}
