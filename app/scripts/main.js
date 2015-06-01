@@ -403,6 +403,13 @@ mai.initializeMap = function () {
   // create map with its options
   mai.map = new google.maps.Map(document.querySelector('#map-canvas'), mapOptions);
 
+  /* Not sure exactly why it works, but without this line, when using GPS or places
+  auto-complete BEFORE selecting any of predefined places, info-window shrinks on
+  screen widths of <= 320. Probably because selecting any of predefined places calls
+  Google places service, and because of that after that call info-window opens properly.
+  */
+  google.maps.places.PlacesService(mai.map);
+
   // bias auto-complete results to current map bounds
   autocomplete.bindTo('bounds', mai.map);
 
@@ -820,13 +827,7 @@ mai.getLocation = function () {
           // set up map for user position
           mai.map.setZoom(17);
           mai.map.setCenter(pos);
-
-          mai.vm.selectedPlace.name(place.formatted_address);
-
-          // open info-window with partial place data while the rest is via request to Google
-          mai.infowindow.setContent($('.iw-part').html());
           mai.infowindow.setPosition(pos);
-          mai.infowindow.open(mai.map);
 
           // construct and show data for user's location
           mai.getStreetViewImg(pos);
