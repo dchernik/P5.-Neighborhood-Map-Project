@@ -826,6 +826,7 @@ mai.getLocation = function () {
 
           // set up map for user position
           mai.map.setZoom(17);
+          mai.map.setCenter(pos);
 
           mai.vm.selectedPlace.name(place.formatted_address);
 
