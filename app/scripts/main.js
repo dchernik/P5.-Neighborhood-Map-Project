@@ -116,7 +116,7 @@ mai.showMessage = function (messageType) {
       break;
 
     case 'Place details error.':
-      mai.vm.errMsg.header('Network service error.');
+      mai.vm.errMsg.header(messageType);
       mai.vm.errMsg.paragraphs.push('Failed to get details for ' + mai.vm.selectedPlace.name() +
         '. Make sure your Internet link is up and try again.');
       mai.vm.errMsg.paragraphs.push('Report the issue if it persists.');
@@ -292,13 +292,6 @@ mai.places = {
     lat: 40.75874,
     lng: -73.978674,
     googlePid: 'ChIJ9U1mz_5YwokRosza1aAk0jM',
-    category: 'Attractions'
-  },
-
-  'Madison Square Garden': {
-    lat: 40.750504,
-    lng: -73.993439,
-    googlePid: 'ChIJhRwB-yFawokR5Phil-QQ3zM',
     category: 'Attractions'
   },
 
@@ -960,6 +953,11 @@ mai.dayFromToday = function (days) {
 
 function ViewModel() {
   var self = this;
+
+  // number of predefined places
+  self.numOfPlaces = ko.computed(function () {
+    return Object.keys(mai.places).length;
+  });
 
   // user input to filter places
   self.inputValue = ko.observable('');
