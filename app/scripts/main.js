@@ -478,6 +478,12 @@ mai.initializeMap = function () {
     var pos = place.geometry.location,
         userPosition = pos.A + ',' + pos.F;     // this format is required bu loadWeather function
 
+    // open info-window with partial place data while the rest is via request to Google
+    mai.vm.selectedPlace.name(place.name);
+    mai.infowindow.setContent($('.iw-part').html());
+    mai.infowindow.setPosition(pos);
+    mai.infowindow.open(mai.map);
+
     // try to get street view image for places coordinates
     mai.getStreetViewImg(pos);
 
@@ -492,15 +498,8 @@ mai.initializeMap = function () {
       mai.map.setZoom(17);
     }
 
-    // update iw position
-    mai.infowindow.setPosition(pos);
-
-    mai.map.setCenter(pos);
-
     // updates iw content and opens it
     mai.createInfoWindowContent(place, place.name);
-
-    mai.infowindow.open(mai.map);
 
     // get weather conditions for around selected place
     mai.loadWeather(userPosition);
@@ -819,25 +818,30 @@ mai.getLocation = function () {
       // perform reverse geo-coding of current user's position using Google service
       geocoder.geocode({ 'latLng': pos }, function (results, status) {
 
-        // atleast one result returned
+        // at least one result returned
         if (status === google.maps.GeocoderStatus.OK) {
 
           // store one of possible result formats
           place = results[1] || results[0] || results[2] || results[3] || results[4] || results[5] || results[6] || results[7] || results[8] || results[9] || null;
 
           // set up map for user position
-          mai.map.setCenter(pos);
           mai.map.setZoom(17);
+
+          mai.vm.selectedPlace.name(place.formatted_address);
+
+          // open info-window with partial place data while the rest is via request to Google
+          mai.infowindow.setContent($('.iw-part').html());
+          mai.infowindow.setPosition(pos);
+          mai.infowindow.open(mai.map);
 
           // construct and show data for user's location
           mai.getStreetViewImg(pos);
-          mai.infowindow.setPosition(pos);
           mai.createInfoWindowContent(place);
 
           // get weather conditions for user's location
           mai.loadWeather(userPosition);
 
-        // oeo-service returned no results, notify user
+        // goe-service returned no results, notify user
         } else if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
           mai.showMessage('Geolocation 0 results.');
 
