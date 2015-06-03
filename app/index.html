@@ -50,7 +50,7 @@
         <div class="row">
           <div class="col-xs-9">
             <div class="input-group search-places-group">
-              <input  id="awesominput" type="text" class="form-control" placeholder="Filter places..." data-bind="observeInputValue: inputValue, event: { 'value-updated': updatePlaces }, enable: droppedMarkers().length === numOfPlaces">
+              <input  id="awesominput" type="text" class="form-control" placeholder="Filter places..." data-bind="observeInputValue: inputValue, event: { 'value-updated': updatePlaces }, enable: droppedMarkers().length === numOfPlaces()">
               <span class="input-group-btn">
                 <button class="btn btn-default clear-btn" type="button" title="Clear input" aria-label="Clear input" data-bind="click: clearInput, enable: inputValue">
                   <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
