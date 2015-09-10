@@ -1399,8 +1399,8 @@ function ViewModel() {
   self.showPlaceGallery = function () {
 
     // get coordinates to request images for
-    var lat = mai.infowindow.getPosition().A,
-        lng = mai.infowindow.getPosition().F,
+  	var lat = mai.infowindow.getPosition()[Object.keys(mai.infowindow.getPosition())[0]],
+        lng = mai.infowindow.getPosition()[Object.keys(mai.infowindow.getPosition())[1]],
         placeName = mai.vm.selectedPlace.name();
 
     // clear any previous images from DOM
@@ -1489,7 +1489,7 @@ function ViewModel() {
     @param numbers lat and lng, string placeName
   **/
   self.getFlickrPhotos = function (lat, lng, placeName) {
-    var apiKey = 'c82b369d7f0b0b53994f32e2c9620f51',
+    var apiKey = 'b63f5f1c9ae9bc8c5fd45366a8f004ab',
         // if place is one of predefined set radius to 100 meters, otherwise to 1 mile
         radius = (Object.keys(mai.places).indexOf(placeName) >= 0 ? 1 : 1.6);
 
